@@ -1,4 +1,4 @@
-node['rvm']['user_installs'] = [
+node.normal['rvm']['user_installs'] = [
   { 'user'          => 'dmponline',
     'home'          => '/opt/dmponline',
     'default_ruby'  => '1.9.3',
