@@ -20,11 +20,6 @@
 # Ensure we have Git installed for deployment
 include_recipe 'git'
 
-# Install MySQL server and client
-include_recipe 'mysql::client'
-include_recipe 'mysql::server'
-include_recipe 'database::mysql'
-
 # libxml-ruby needs devel
 package 'libxml2-devel'
 # libxslt-ruby needs devel
@@ -32,6 +27,12 @@ package 'libxslt-devel'
 
 # Install nginx for reverse proxying
 include_recipe 'nginx'
+
+template '/etc/nginx/conf.d/default.conf' do
+  action :create
+  source 'nginx.conf.erb'
+  notifies :reload, 'service[nginx]'
+end
 
 # Configure iptables to allow SSH and HTTP
 include_recipe 'iptables'
@@ -52,36 +53,13 @@ end
 # (Configured by attributes/default.rb)
 include_recipe 'rvm::user'
 
-mysql_connection_info = {
-  :host => 'localhost',
-  :username => 'root',
-  :password => node['mysql']['server_root_password']
-}
-
-# Create MySQL database
-mysql_database 'dmponline' do
-  connection mysql_connection_info
-  action :create
-end
-
-# Create MySQL database user
-mysql_database_user 'dmponline' do
-  connection mysql_connection_info
-  password 'dmponline'
-  action :create
-end
-
-# Grant privileges to user
-mysql_database_user 'dmponline' do
-  connection mysql_connection_info
-  database_name 'dmponline'
-  action :grant
-end
+# Install and configure database server
+include_recipe 'dmponline::database'
 
 # Deploy DMPonline
 deploy '/opt/dmponline' do
   deploy_to '/opt/dmponline'
-  repo 'https://github.com/CottageLabs/DMPOnline.git'
+  repo 'https://github.com/tjdett/DMPOnline.git'
   user 'dmponline'
   group 'dmponline'
   enable_submodules true
