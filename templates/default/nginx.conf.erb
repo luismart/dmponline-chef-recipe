@@ -1,25 +1,40 @@
-
 # The default server
 #
 server {
     listen       80;
     server_name  _;
 
+    root   /usr/share/nginx/html;
+
     # proxy to Unicorn on 127.0.0.1:8000
     location / {
+        try_files    @assets $uri @unicorn;
+    }
+
+    location @unicorn {
         proxy_pass   http://127.0.0.1:8000;
     }
 
-    error_page  404              /404.html;
-    location = /404.html {
-        root   /usr/share/nginx/html;
+    location /assets/ {
+        root /opt/dmponline/current/public;
+
+        # Per RFC2616 - 1 year maximum expiry
+        # http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html
+        expires 1y;
+        add_header Cache-Control public;
+
+        # Some browsers still send conditional-GET requests if there's a
+        # Last-Modified header or an ETag header even if they haven't
+        # reached the expiry date sent in the Expires header.
+        add_header Last-Modified "";
+        add_header ETag "";
+        break;
     }
+
+    error_page  404              /404.html;
 
     # redirect server error pages to the static page /50x.html
     error_page   500 502 503 504  /50x.html;
-    location = /50x.html {
-        root   /usr/share/nginx/html;
-    }
 
 }
 

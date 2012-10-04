@@ -27,12 +27,6 @@ mysql_connection_info = {
   :password => node['mysql']['server_root_password']
 }
 
-# Create MySQL database
-mysql_database 'dmponline' do
-  connection mysql_connection_info
-  action :create
-end
-
 # Create MySQL database user
 mysql_database_user 'dmponline' do
   connection mysql_connection_info
@@ -40,9 +34,17 @@ mysql_database_user 'dmponline' do
   action :create
 end
 
-# Grant privileges to user
-mysql_database_user 'dmponline' do
-  connection mysql_connection_info
-  database_name 'dmponline'
-  action :grant
+['dmponline', 'dmponline_test'].each do |dbname|
+  # Create MySQL database
+  mysql_database dbname do
+    connection mysql_connection_info
+    action :create
+  end
+
+  # Grant privileges to user
+  mysql_database_user 'dmponline' do
+    connection mysql_connection_info
+    database_name dbname
+    action :grant
+  end
 end

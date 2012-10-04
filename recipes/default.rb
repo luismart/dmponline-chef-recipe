@@ -49,12 +49,54 @@ user 'dmponline' do
   supports :manage_home => true
 end
 
+directory "/opt/dmponline" do
+  mode 0755
+end
+
 # Install RVM for 'dmponline'
 # (Configured by attributes/default.rb)
 include_recipe 'rvm::user'
 
 # Install and configure database server
 include_recipe 'dmponline::database'
+
+# Configure service (using bluepill)
+include_recipe "bluepill"
+template "/etc/bluepill/dmponline.pill" do
+  source "dmponline.pill.erb"
+end
+bluepill_service "dmponline" do
+  action [:load, :enable]
+end
+
+# Install wkhtmltopdf
+wkhtmltopdf_arch = case node['kernel']['machine']
+when 'x86_64'
+  'amd64'
+else
+  'i386'
+end
+
+remote_file '/tmp/wkhtmltopdf.tar.bz2' do
+  source "http://wkhtmltopdf.googlecode.com/files/wkhtmltopdf-0.11.0_rc1-static-#{wkhtmltopdf_arch}.tar.bz2"
+  not_if { File.exists?("/usr/local/bin/wkhtmltopdf") }
+  notifies :run, 'bash[untar /tmp/wkhtmltopdf.tar.bz2]'
+end
+
+bash 'untar /tmp/wkhtmltopdf.tar.bz2' do
+  action :nothing
+  code <<-EOH
+    cd /tmp
+    yes | tar xjvf /tmp/wkhtmltopdf.tar.bz2
+    cp /tmp/wkhtmltopdf-#{wkhtmltopdf_arch} /usr/local/bin/wkhtmltopdf
+  EOH
+  notifies :create, 'file[/usr/local/bin/wkhtmltopdf]'
+end
+
+file '/usr/local/bin/wkhtmltopdf' do
+  action :nothing
+  mode 0755
+end
 
 # Deploy DMPonline
 deploy '/opt/dmponline' do
@@ -66,14 +108,18 @@ deploy '/opt/dmponline' do
   environment 'RAILS_ENV' => 'production'
   shallow_clone true
   action :deploy # or :rollback
-  restart_command 'echo implement restart'
+  restart_command do
+    bluepill_service "dmponline" do
+      action [:load, :restart, :start]
+    end
+  end
   scm_provider Chef::Provider::Git
   symlink_before_migrate({
     'config/database.yml' => 'config/database.yml',
     'config/email.yml' => 'config/email.yml'
   })
   purge_before_symlink []
-  create_dirs_before_symlink ['log', 'config']
+  create_dirs_before_symlink ['log', 'config', 'tmp/pids']
   symlinks({'log' => 'log'})
   before_symlink do
     current_release = release_path
@@ -108,10 +154,11 @@ deploy '/opt/dmponline' do
       user        'dmponline'
       cwd         current_release
       code        <<-EOH
-        rake db:migrate:status
-        rake db:migrate
+        #rake db:migrate:status
+        #rake db:migrate
+        rake db:setup
+        rake assets:precompile
       EOH
     end
   end
 end
-
