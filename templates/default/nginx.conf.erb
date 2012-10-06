@@ -4,11 +4,11 @@ server {
     listen       80;
     server_name  _;
 
-    root   /usr/share/nginx/html;
+    root /opt/dmponline/current/public;
 
     # proxy to Unicorn on 127.0.0.1:8000
     location / {
-        try_files    @assets $uri @unicorn;
+        try_files    $uri @unicorn;
     }
 
     location @unicorn {
@@ -16,7 +16,6 @@ server {
     }
 
     location /assets/ {
-        root /opt/dmponline/current/public;
 
         # Per RFC2616 - 1 year maximum expiry
         # http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html

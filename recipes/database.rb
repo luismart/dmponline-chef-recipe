@@ -21,6 +21,12 @@ include_recipe 'mysql::client'
 include_recipe 'mysql::server'
 include_recipe 'database::mysql'
 
+bash "ensure mysql server is started and enabled" do
+  code "true"
+  notifies :start, 'service[mysql]'
+  notifies :enable, 'service[mysql]'
+end
+
 mysql_connection_info = {
   :host => 'localhost',
   :username => 'root',

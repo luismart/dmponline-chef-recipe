@@ -41,6 +41,12 @@ iptables_rule 'port_ssh' do
   cookbook 'openssh'
 end
 
+# Install sendmail for error reporting
+package 'sendmail'
+service 'sendmail' do
+  action [:enable, :start]
+end
+
 # Create 'dmponline' user
 user 'dmponline' do
   comment 'DMPOnline app server'
@@ -49,7 +55,7 @@ user 'dmponline' do
   supports :manage_home => true
 end
 
-directory "/opt/dmponline" do
+directory '/opt/dmponline' do
   mode 0755
 end
 
@@ -61,11 +67,11 @@ include_recipe 'rvm::user'
 include_recipe 'dmponline::database'
 
 # Configure service (using bluepill)
-include_recipe "bluepill"
-template "/etc/bluepill/dmponline.pill" do
-  source "dmponline.pill.erb"
+include_recipe 'bluepill'
+template '/etc/bluepill/dmponline.pill' do
+  source 'dmponline.pill.erb'
 end
-bluepill_service "dmponline" do
+bluepill_service 'dmponline' do
   action [:load, :enable]
 end
 
@@ -78,8 +84,8 @@ else
 end
 
 remote_file '/tmp/wkhtmltopdf.tar.bz2' do
-  source "http://wkhtmltopdf.googlecode.com/files/wkhtmltopdf-0.11.0_rc1-static-#{wkhtmltopdf_arch}.tar.bz2"
-  not_if { File.exists?("/usr/local/bin/wkhtmltopdf") }
+  source 'http://wkhtmltopdf.googlecode.com/files/wkhtmltopdf-0.11.0_rc1-static-#{wkhtmltopdf_arch}.tar.bz2'
+  not_if { File.exists?('/usr/local/bin/wkhtmltopdf') }
   notifies :run, 'bash[untar /tmp/wkhtmltopdf.tar.bz2]'
 end
 
@@ -109,7 +115,7 @@ deploy '/opt/dmponline' do
   shallow_clone true
   action :deploy # or :rollback
   restart_command do
-    bluepill_service "dmponline" do
+    bluepill_service 'dmponline' do
       action [:load, :restart, :start]
     end
   end
@@ -118,11 +124,33 @@ deploy '/opt/dmponline' do
     'config/database.yml' => 'config/database.yml',
     'config/email.yml' => 'config/email.yml'
   })
-  purge_before_symlink []
-  create_dirs_before_symlink ['log', 'config', 'tmp/pids']
-  symlinks({'log' => 'log'})
+  #purge_before_symlink %w[log tmp/pids]
+  #create_dirs_before_symlink %w[]
   before_symlink do
     current_release = release_path
+    shared_path = '/opt/dmponline/shared'
+
+    %w[log tmp/pids].each do |d|
+      directory "#{current_release}/#{d}" do
+        action :delete
+      end
+    end
+
+    %w[config log pids].each do |d|
+      directory "#{shared_path}/#{d}" do
+        user 'dmponline'
+        group 'dmponline'
+      end
+    end
+
+    ['database', 'email'].each do |setting_type|
+      template "#{shared_path}/config/#{setting_type}.yml" do
+        action :create_if_missing
+        source "#{setting_type}.yml.erb"
+        user 'dmponline'
+        group 'dmponline'
+      end
+    end
 
     rvm_shell 'bundle_install' do
       ruby_string '1.9.3'
@@ -134,20 +162,9 @@ deploy '/opt/dmponline' do
       EOH
     end
   end
+  symlinks({'log' => 'log', 'pids' => 'tmp/pids'})
   before_restart do
     current_release = release_path
-    shared_path = '/opt/dmponline/shared'
-
-    directory "#{shared_path}/config"
-
-    ['database', 'email'].each do |setting_type|
-      template "#{shared_path}/config/#{setting_type}.yml" do
-        action :create_if_missing
-        source "#{setting_type}.yml.erb"
-        user 'dmponline'
-        group 'dmponline'
-      end
-    end
 
     rvm_shell 'migrate' do
       ruby_string '1.9.3'
