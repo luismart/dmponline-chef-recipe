@@ -84,7 +84,7 @@ else
 end
 
 remote_file '/tmp/wkhtmltopdf.tar.bz2' do
-  source 'http://wkhtmltopdf.googlecode.com/files/wkhtmltopdf-0.11.0_rc1-static-#{wkhtmltopdf_arch}.tar.bz2'
+  source "http://wkhtmltopdf.googlecode.com/files/wkhtmltopdf-0.11.0_rc1-static-#{wkhtmltopdf_arch}.tar.bz2"
   not_if { File.exists?('/usr/local/bin/wkhtmltopdf') }
   notifies :run, 'bash[untar /tmp/wkhtmltopdf.tar.bz2]'
 end
