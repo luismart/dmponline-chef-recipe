@@ -104,6 +104,9 @@ file '/usr/local/bin/wkhtmltopdf' do
   mode 0755
 end
 
+# wkhtmltopdf dependencies
+%w[libXrender libXext].each {|p| package p }
+
 # Deploy DMPonline
 deploy '/opt/dmponline' do
   deploy_to '/opt/dmponline'
@@ -171,11 +174,15 @@ deploy '/opt/dmponline' do
       user        'dmponline'
       cwd         current_release
       code        <<-EOH
-        #rake db:migrate:status
-        #rake db:migrate
         rake db:setup
+        rake assets:clean
         rake assets:precompile
       EOH
     end
+
+    file "#{current_release}/tmp/restart.txt" do
+      action :touch
+    end
+
   end
 end
