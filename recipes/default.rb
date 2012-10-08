@@ -107,6 +107,11 @@ end
 # wkhtmltopdf dependencies
 %w[libXrender libXext].each {|p| package p }
 
+::Chef::Recipe.send(:include, Opscode::OpenSSL::Password)
+
+# Generate 60 character secret token
+node.set_unless['dmponline']['secret_token'] = (1..3).map{secure_password}.join
+
 # Deploy DMPonline
 deploy '/opt/dmponline' do
   deploy_to '/opt/dmponline'
@@ -125,7 +130,8 @@ deploy '/opt/dmponline' do
   scm_provider Chef::Provider::Git
   symlink_before_migrate({
     'config/database.yml' => 'config/database.yml',
-    'config/email.yml' => 'config/email.yml'
+    'config/email.yml' => 'config/email.yml',
+    'config/secret_token.rb' => 'config/initializers/secret_token.rb'
   })
   #purge_before_symlink %w[log tmp/pids]
   #create_dirs_before_symlink %w[]
@@ -146,10 +152,10 @@ deploy '/opt/dmponline' do
       end
     end
 
-    ['database', 'email'].each do |setting_type|
-      template "#{shared_path}/config/#{setting_type}.yml" do
+    %w[database.yml email.yml secret_token.rb].each do |config_file|
+      template "#{shared_path}/config/#{config_file}" do
         action :create_if_missing
-        source "#{setting_type}.yml.erb"
+        source "#{config_file}.erb"
         user 'dmponline'
         group 'dmponline'
       end
@@ -164,6 +170,21 @@ deploy '/opt/dmponline' do
         bundle install
       EOH
     end
+
+    rvm_shell 'setup' do
+      ruby_string '1.9.3'
+      user        'dmponline'
+      cwd         current_release
+      code        <<-EOH
+        rake db:setup
+      EOH
+      not_if { File.exists?("#{shared_path}/db_installed") }
+    end
+
+    file "#{shared_path}/db_installed" do
+      action :touch
+    end
+
   end
   symlinks({'log' => 'log', 'pids' => 'tmp/pids'})
   before_restart do
@@ -174,7 +195,7 @@ deploy '/opt/dmponline' do
       user        'dmponline'
       cwd         current_release
       code        <<-EOH
-        rake db:setup
+        rake db:migrate
         rake assets:clean
         rake assets:precompile
       EOH
