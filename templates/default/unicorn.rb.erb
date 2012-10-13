@@ -1,0 +1,24 @@
+worker_processes 4
+user "dmponline", "dmponline"
+working_directory "/opt/dmponline/current" # available in 0.94.0+
+
+listen "/opt/dmponline/shared/dmponline.sock", :backlog => 64
+listen 8000, :tcp_nopush => true
+
+timeout 30
+
+pid "/opt/dmponline/shared/pids/unicorn.pid"
+
+stderr_path "/opt/dmponline/shared/log/unicorn.stderr.log"
+stdout_path "/opt/dmponline/shared/log/unicorn.stdout.log"
+
+before_fork do |server, worker|
+  old_pid = "/opt/dmponline/shared/pids/unicorn.pid.oldbin"
+  if old_pid != server.pid
+    begin
+      sig = (worker.nr + 1) >= server.worker_processes ? :QUIT : :TTOU
+      Process.kill(sig, File.read(old_pid).to_i)
+    rescue Errno::ENOENT, Errno::ESRCH
+    end
+  end
+end

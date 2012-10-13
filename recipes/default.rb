@@ -152,7 +152,7 @@ deploy '/opt/dmponline' do
       end
     end
 
-    %w[database.yml email.yml secret_token.rb].each do |config_file|
+    %w[database.yml email.yml secret_token.rb unicorn.rb].each do |config_file|
       template "#{shared_path}/config/#{config_file}" do
         action :create_if_missing
         source "#{config_file}.erb"
@@ -203,6 +203,8 @@ deploy '/opt/dmponline' do
 
     file "#{current_release}/tmp/restart.txt" do
       action :touch
+      user  'dmponline'
+      group 'dmponline'
     end
 
   end
