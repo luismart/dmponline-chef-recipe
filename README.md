@@ -56,7 +56,7 @@ Vagrant is available for most platforms from [vagrantup.com](http://vagrantup.co
 
 4. Configure your Hosted Chef key
 ---------------------------------
-You will need your <Organisation>-validator.pem key file located in ~/.chef/ folder.
+You will need your ORGNAME-validator.pem key file located in ~/.chef/ folder.
 Export the ORGNAME variable with your organisation name:
 
  ```$ export ORGNAME=dmponlineclchef```
