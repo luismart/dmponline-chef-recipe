@@ -1,2 +1,4 @@
 *~
 .chef
+.DS_store
+.vagrant
