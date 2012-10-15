@@ -115,7 +115,7 @@ node.set_unless['dmponline']['secret_token'] = (1..3).map{secure_password}.join
 # Deploy DMPonline
 deploy '/opt/dmponline' do
   deploy_to '/opt/dmponline'
-  repo 'https://github.com/tjdett/DMPOnline.git'
+  repo 'https://github.com/CottageLabs/DMPOnline.git'
   user 'dmponline'
   group 'dmponline'
   enable_submodules true
