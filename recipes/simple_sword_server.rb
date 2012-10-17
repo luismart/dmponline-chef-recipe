@@ -48,7 +48,6 @@ gunicorn_config "/opt/simple-sword-server/sss/webpy.py" do
   worker_processes 2
   listen "0.0.0.0:8100"
   owner 'dmponline'
-  user 'dmponline'
   group 'dmponline'
   action :create
 end
