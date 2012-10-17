@@ -21,15 +21,46 @@
 
 
 include_recipe "python"
+include_recipe "gunicorn"
+
 
 # install web.py into system
 python_pip "web.py" do
   action :install
 end
 
-# install web.py into system
+# install lxml into system
 python_pip "lxml" do
   action :install
+end
+
+
+git "/opt/simple-sword-server" do
+  repository "git://github.com/swordapp/Simple-Sword-Server.git"
+  reference "master"
+  action :sync
+  user 'dmponline'
+  group 'dmponline'
+end
+
+
+gunicorn_config "/opt/simple-sword-server/sss/webpy.py" do
+  worker_processes 2
+  listen "0.0.0.0:8100"
+  owner 'dmponline'
+  user 'dmponline'
+  group 'dmponline'
+  action :create
+end
+
+
+# Configure service (using bluepill)
+include_recipe 'bluepill'
+template '/etc/bluepill/simple-sword-server.pill' do
+  source 'simple-sword-server.pill.erb'
+end
+bluepill_service 'simple-sword-server' do
+  action [:load, :enable]
 end
 
 
