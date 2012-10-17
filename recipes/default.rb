@@ -17,9 +17,11 @@
 # Recipe:: default
 #
 
+
+
 # Ensure we have Git installed for deployment
 include_recipe 'git'
-
+=begin
 # libxml-ruby needs devel
 package 'libxml2-devel'
 # libxslt-ruby needs devel
@@ -63,9 +65,12 @@ end
 # (Configured by attributes/default.rb)
 include_recipe 'rvm::user'
 
+=end
 
 #Install Simple Sword Server
 include_recipe 'dmponline::simple_sword_server'
+
+=begin
 
 # Install and configure database server
 include_recipe 'dmponline::database'
@@ -213,3 +218,4 @@ deploy '/opt/dmponline' do
 
   end
 end
+=end

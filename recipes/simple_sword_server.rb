@@ -39,9 +39,10 @@ git "/opt/simple-sword-server" do
   repository "git://github.com/swordapp/Simple-Sword-Server.git"
   reference "master"
   action :sync
-  user 'dmponline'
-  group 'dmponline'
+#  user 'dmponline'
+#  group 'dmponline'
 end
+
 
 
 gunicorn_config "/opt/simple-sword-server/sss/webpy.py" do
