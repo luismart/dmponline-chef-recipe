@@ -34,27 +34,23 @@ python_pip "lxml" do
   action :install
 end
 
-
+#Get the Simple Sword Server software from Github
 git "/opt/simple-sword-server" do
   repository "git://github.com/swordapp/Simple-Sword-Server.git"
   reference "master"
   action :sync
-#  user 'dmponline'
-#  group 'dmponline'
 end
 
 
-
+#Configure Gunicorn to host SSS
 gunicorn_config "/opt/simple-sword-server/gunicorn.py" do
   worker_processes 2
   listen "0.0.0.0:8100"
-#  owner 'dmponline'
-#  group 'dmponline'
   action :create
 end
 
 
-# Configure service (using bluepill)
+# Provision service (using bluepill)
 include_recipe 'bluepill'
 template '/etc/bluepill/simple-sword-server.pill' do
   source 'simple-sword-server.pill.erb'
@@ -62,46 +58,3 @@ end
 bluepill_service 'simple-sword-server' do
   action [:load, :enable]
 end
-
-
-=begin
-
-include_recipe 'mysql::client'
-include_recipe 'mysql::server'
-include_recipe 'database::mysql'
-
-bash "ensure mysql server is started and enabled" do
-  code "true"
-  notifies :start, 'service[mysql]'
-  notifies :enable, 'service[mysql]'
-end
-
-mysql_connection_info = {
-  :host => 'localhost',
-  :username => 'root',
-  :password => node['mysql']['server_root_password']
-}
-
-# Create MySQL database user
-mysql_database_user 'dmponline' do
-  connection mysql_connection_info
-  password 'dmponline'
-  action :create
-end
-
-['dmponline', 'dmponline_test'].each do |dbname|
-  # Create MySQL database
-  mysql_database dbname do
-    connection mysql_connection_info
-    action :create
-  end
-
-  # Grant privileges to user
-  mysql_database_user 'dmponline' do
-    connection mysql_connection_info
-    database_name dbname
-    action :grant
-  end
-end
-
-=end
