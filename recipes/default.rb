@@ -63,6 +63,10 @@ end
 # (Configured by attributes/default.rb)
 include_recipe 'rvm::user'
 
+
+#Install Simple Sword Server
+include_recipe 'dmponline::simple_sword_server'
+
 # Install and configure database server
 include_recipe 'dmponline::database'
 
