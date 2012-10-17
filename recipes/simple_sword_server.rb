@@ -45,11 +45,11 @@ end
 
 
 
-gunicorn_config "/opt/simple-sword-server/sss/webpy.py" do
+gunicorn_config "/opt/simple-sword-server/gunicorn.py" do
   worker_processes 2
   listen "0.0.0.0:8100"
-  owner 'dmponline'
-  group 'dmponline'
+#  owner 'dmponline'
+#  group 'dmponline'
   action :create
 end
 

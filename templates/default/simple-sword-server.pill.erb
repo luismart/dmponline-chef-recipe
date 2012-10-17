@@ -2,6 +2,6 @@ Bluepill.application("simple-sword-server") do |app|
   app.process("simple-sword-server") do |process|
     app_dir = '/opt/simple-sword-server'
     process.working_dir = app_dir
-    process.start_command = "/bin/bash -l -c 'cd #{app_dir}/sss && gunicorn --config=/opt/simple-sword-server/gunicorn.cfg -D webpy:application'"
+    process.start_command = "/bin/bash -l -c 'cd #{app_dir}/sss && gunicorn --config=/opt/simple-sword-server/gunicorn.py -D webpy:application'"
   end
 end
